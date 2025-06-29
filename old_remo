@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+ALIAS_DIR="$HOME/Documents/REMO_MODE"
+BRAIN_DIR="$HOME/Documents/REMO_BRAIN"
+ALIAS_FILE="$ALIAS_DIR/aliases.sh"
+HEADER_FILE="$HOME/Documents/REMO_MODE/iii.sh"
+HELP_FILE="$ALIAS_DIR/help.txt"
+
+print_header() {
+  bash "$HEADER_FILE"
+  echo
+}
+
+print_brain() {
+  echo "== BRAIN =="
+  if [[ -d "$BRAIN_DIR" ]]; then
+    ls "$BRAIN_DIR" 2>/dev/null | sed 's/^/ - /'
+  else
+    echo "(No brain notes found)"
+  fi
+  echo
+}
+
+print_aliases() {
+  echo "== ALIAS =="
+  if [[ -s "$ALIAS_FILE" ]]; then
+    grep -E '^alias ' "$ALIAS_FILE" | sed -E 's/^alias +([^=]+)=["'\'']?(.*)["'\'']?$/ - \1 : \2/'
+  else
+    echo "(No aliases defined)"
+  fi
+  echo
+}
+
+add_alias() {
+  name="$1"
+  shift
+  cmd="$*"
+  [[ -z "$name" || -z "$cmd" ]] && echo "Usage: remo add <alias> <command>" && exit 1
+
+  grep -vE "^alias +${name}=" "$ALIAS_FILE" 2>/dev/null >"$ALIAS_FILE.tmp" || true
+  mv "$ALIAS_FILE.tmp" "$ALIAS_FILE"
+  printf 'alias %s="%s"\n' "$name" "$cmd" >>"$ALIAS_FILE"
+  echo "Alias '$name' added."
+}
+
+remove_alias() {
+  name="$1"
+  [[ -z "$name" ]] && echo "Usage: remo remove <alias>" && exit 1
+
+  if grep -qE "^alias +${name}=" "$ALIAS_FILE"; then
+    grep -vE "^alias +${name}=" "$ALIAS_FILE" >"$ALIAS_FILE.tmp"
+    mv "$ALIAS_FILE.tmp" "$ALIAS_FILE"
+    echo "Alias '$name' removed."
+  else
+    echo "Alias '$name' not found."
+  fi
+}
+
+edit_brain() {
+  echo -n "Enter note title: "
+  read -r title
+  [[ -z "$title" ]] && { echo "Title cannot be empty"; exit 1; }
+
+  mkdir -p "$BRAIN_DIR"
+  nano "$BRAIN_DIR/$title"
+}
+
+# Main logic
+case "$1" in
+  --help)
+    [[ -f "$HELP_FILE" ]] && cat "$HELP_FILE" || echo "No help file."
+    ;;
+  add)
+    shift
+    add_alias "$@"
+    ;;
+  remove)
+    shift
+    remove_alias "$1"
+    ;;
+  brain)
+    edit_brain
+    ;;
+  *)
+    print_header
+    print_brain
+    print_aliases
+    ;;
+esac

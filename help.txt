@@ -1,0 +1,11 @@
+REMO ALIAS MANAGER – USAGE
+
+  remo               → show banner and list of aliases
+  remo --help        → display this help
+  remo add <name> <command>     → add a new alias
+  remo remove <name>            → remove an alias
+  remo brain         Write or view personal notes (REMO_BRAIN)
+
+Examples:
+  remo add gs 'git status'
+  remo remove gs
